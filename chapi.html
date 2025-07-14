@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapi - Evaluación Nutricional</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e6f3f8;
+      color: #333;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #0077b6;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .resultado {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .sano {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .anemia {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .kit-img {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+    .historial {
+      margin-top: 30px;
+    }
+    .registro {
+      background-color: #f0f0f0;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chapi: Evaluación Nutricional</h1>
+    <label>Edad (en meses):</label>
+    <input type="number" id="edad" min="0" max="60">
+
+    <label>Peso (kg):</label>
+    <input type="number" id="peso" step="0.1">
+
+    <label>Talla (cm):</label>
+    <input type="number" id="talla" step="0.1">
+
+    <label>Hemoglobina (g/dL):</label>
+    <input type="number" id="hemo" step="0.1">
+
+    <button onclick="evaluar()">Evaluar</button>
+    <button onclick="guardarDatos()">Guardar en la nube</button>
+    <button onclick="verHistorial()">Ver historial</button>
+
+    <div id="resultado" class="resultado"></div>
+
+    <div class="historial">
+      <h3>Historial de registros</h3>
+      <div id="historial"></div>
+    </div>
+
+    <audio id="audioSano" src="https://actions.google.com/sounds/v1/human_voices/human_voice_boing.ogg"></audio>
+    <audio id="audioAnemia" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
+
+  </div>
+
+  <script>
+    let datosNiño = {};
+
+    const rangos = [
+      { edad: 2, pesoMin: 4.5, pesoMax: 6.5, tallaMin: 55, tallaMax: 60 },
+      { edad: 6, pesoMin: 6.5, pesoMax: 8.5, tallaMin: 63, tallaMax: 70 },
+      { edad: 12, pesoMin: 8, pesoMax: 11, tallaMin: 70, tallaMax: 80 },
+      { edad: 24, pesoMin: 10, pesoMax: 13.5, tallaMin: 80, tallaMax: 90 },
+      { edad: 36, pesoMin: 12, pesoMax: 15, tallaMin: 88, tallaMax: 98 },
+      { edad: 48, pesoMin: 14, pesoMax: 17.5, tallaMin: 95, tallaMax: 105 },
+      { edad: 60, pesoMin: 15.5, pesoMax: 20, tallaMin: 100, tallaMax: 110 }
+    ];
+
+    function evaluar() {
+      const edad = parseInt(document.getElementById('edad').value);
+      const peso = parseFloat(document.getElementById('peso').value);
+      const talla = parseFloat(document.getElementById('talla').value);
+      const hemo = parseFloat(document.getElementById('hemo').value);
+      const resultado = document.getElementById('resultado');
+
+      if (isNaN(edad) || isNaN(peso) || isNaN(talla) || isNaN(hemo)) {
+        resultado.innerHTML = '<strong>Por favor, completa todos los campos.</strong>';
+        resultado.className = 'resultado';
+        return;
+      }
+
+      let referencia = rangos.reduce((prev, curr) => Math.abs(curr.edad - edad) < Math.abs(prev.edad - edad) ? curr : prev);
+      let alertaPeso = peso < referencia.pesoMin ? 'Peso bajo' : peso > referencia.pesoMax ? 'Peso alto' : 'Peso dentro del rango';
+      let alertaTalla = talla < referencia.tallaMin ? 'Talla baja' : talla > referencia.tallaMax ? 'Talla alta' : 'Talla dentro del rango';
+
+      let clasificacion = '';
+      let recomendacion = '';
+      let imagen = '';
+
+      if (hemo < 11) {
+        clasificacion = 'Niño con anemia grado 1';
+        recomendacion = 'Requiere dieta rica en hierro y suplemento. Consultar nutricionista.';
+        imagen = 'https://cdn.pixabay.com/photo/2014/12/15/17/16/baby-food-569071_1280.jpg';
+        resultado.className = 'resultado anemia';
+        document.getElementById('audioAnemia').play();
+      } else {
+        clasificacion = 'Niño sano';
+        recomendacion = 'Continuar con alimentación balanceada y controles regulares.';
+        imagen = 'https://cdn.pixabay.com/photo/2022/03/21/09/58/baby-7082344_1280.jpg';
+        resultado.className = 'resultado sano';
+        document.getElementById('audioSano').play();
+      }
+
+      resultado.innerHTML = `
+        <strong>${clasificacion} ${clasificacion.includes('anemia') ? '😟' : '😊'}</strong><br>
+        <strong>${alertaPeso}</strong> | <strong>${alertaTalla}</strong><br>
+        ${recomendacion}<br><br>
+
+        <div style="margin: 10px 0;">
+          <label><strong>Nivel de Hemoglobina:</strong> ${hemo} g/dL</label>
+          <div style="background: #ccc; height: 20px; border-radius: 10px; overflow: hidden;">
+            <div style="width: ${Math.min((hemo / 15) * 100, 100)}%; background: ${hemo < 11 ? '#dc3545' : '#28a745'}; height: 100%;"></div>
+          </div>
+        </div>
+
+        <div style="margin: 10px 0;">
+          <label><strong>Peso comparado al ideal:</strong> ${peso} kg</label>
+          <div style="background: #ccc; height: 20px; border-radius: 10px; overflow: hidden;">
+            <div style="width: ${Math.min(((peso - referencia.pesoMin) / (referencia.pesoMax - referencia.pesoMin)) * 100, 100)}%; background: ${peso < referencia.pesoMin || peso > referencia.pesoMax ? '#ffc107' : '#28a745'}; height: 100%;"></div>
+          </div>
+        </div>
+
+        <div style="margin: 10px 0;">
+          <label><strong>Talla comparada al ideal:</strong> ${talla} cm</label>
+          <div style="background: #ccc; height: 20px; border-radius: 10px; overflow: hidden;">
+            <div style="width: ${Math.min(((talla - referencia.tallaMin) / (referencia.tallaMax - referencia.tallaMin)) * 100, 100)}%; background: ${talla < referencia.tallaMin || talla > referencia.tallaMax ? '#ffc107' : '#28a745'}; height: 100%;"></div>
+          </div>
+        </div>
+
+        <img src="${imagen}" class="kit-img">
+        <img src="https://cdn-icons-png.flaticon.com/512/1534/1534296.png" class="kit-img" alt="Kit nutricional">
+      `;
+
+      datosNiño = { edad, peso, talla, hemo, clasificacion, recomendacion, fecha: new Date().toLocaleString() };
+    }
+
+    function guardarDatos() {
+      if (!datosNiño.edad) {
+        alert('Primero debes evaluar al niño.');
+        return;
+      }
+      let registros = JSON.parse(localStorage.getItem('registro_nutricion')) || [];
+      registros.push(datosNiño);
+      localStorage.setItem('registro_nutricion', JSON.stringify(registros));
+      alert('Datos guardados exitosamente.');
+    }
+
+    function verHistorial() {
+      const historialDiv = document.getElementById('historial');
+      historialDiv.innerHTML = '';
+      const registros = JSON.parse(localStorage.getItem('registro_nutricion')) || [];
+      if (registros.length === 0) {
+        historialDiv.innerHTML = '<p>No hay registros aún.</p>';
+        return;
+      }
+      registros.forEach((r, index) => {
+        const item = document.createElement('div');
+        item.className = 'registro';
+        item.innerHTML = `<strong>Registro ${index + 1}</strong><br>
+          Edad: ${r.edad} meses<br>
+          Peso: ${r.peso} kg<br>
+          Talla: ${r.talla} cm<br>
+          Hemoglobina: ${r.hemo} g/dL<br>
+          Clasificación: ${r.clasificacion}<br>
+          Recomendación: ${r.recomendacion}<br>
+          Fecha: ${r.fecha}`;
+        historialDiv.appendChild(item);
+      });
+    }
+  </script>
+</body>
+</html>
